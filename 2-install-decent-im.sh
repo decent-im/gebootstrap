@@ -8,7 +8,7 @@ layman -a lua
 
 yes | layman -o https://raw.githubusercontent.com/decent-im/gentoo-overlay/master/layman.xml -f -a decent.im
 
-### Make sure `hostname -f` shows what you want to be your FQDN! decent-im generates configs based on that
+# Make sure `hostname -f` shows what you want to be your FQDN! decent-im generates configs based on that
 EXTERNAL_IP=`dig +short myip.opendns.com @resolver1.opendns.com`
 DNS_PTR=`dig +short -x $EXTERNAL_IP`
 FQDN=`echo $DNS_PTR | sed 's/[.]$//'`
