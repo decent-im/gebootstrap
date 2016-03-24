@@ -44,7 +44,7 @@ emerge -v \
   logrotate \
   \
   vim \
-  screen \
+  app-misc/screen \
   tmux \
   bash-completion \
 
