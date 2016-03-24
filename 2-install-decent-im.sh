@@ -14,7 +14,7 @@ DNS_PTR=`dig +short -x $EXTERNAL_IP @resolver1.opendns.com`
 FQDN=`echo $DNS_PTR | sed 's/[.]$//'`
 echo "$FQDN" > /etc/fqdn
 HOSTNAME=`echo $FQDN | sed 's/.*$//'`
-DOMAIN=`echo $FQDN | 's/^[^.]*[.]//'`
+DOMAIN=`echo $FQDN | sed 's/^[^.]*[.]//'`
 echo "$HOSTNAME" > /etc/hostname
 service hostname restart
 
