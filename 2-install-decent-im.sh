@@ -10,7 +10,7 @@ yes | layman -o https://raw.githubusercontent.com/decent-im/gentoo-overlay/maste
 
 # Make sure `hostname -f` shows what you want to be your FQDN! decent-im generates configs based on that
 EXTERNAL_IP=`dig +short myip.opendns.com @resolver1.opendns.com`
-DNS_PTR=`dig +short -x $EXTERNAL_IP`
+DNS_PTR=`dig +short -x $EXTERNAL_IP @resolver1.opendns.com`
 FQDN=`echo $DNS_PTR | sed 's/[.]$//'`
 echo "$FQDN" > /etc/fqdn
 HOSTNAME=`echo $FQDN | sed 's/.*$//'`
