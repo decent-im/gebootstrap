@@ -16,11 +16,9 @@ emerge --sync
 gunzip -c /proc/config.gz > /usr/src/livecd.config
 emerge hardened-sources genkernel grub
 cd /usr/src/linux
-cp ../livecd.config .config
-make olddefconfig
-make localmodconfig
-cp .config ../localmodconfig.config
-genkernel --kernel-config=/usr/src/localmodconfig.config all
+make defconfig kvmconfig
+cp .config /usr/src/kernel.config
+genkernel --kernel-config=/usr/src/kernel.config all
 
 grub2-install /dev/sda
 
