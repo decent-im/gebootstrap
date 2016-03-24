@@ -28,6 +28,8 @@ do
   mount --rbind {/,}$x
 done
 
+cp -L {/,}etc/resolv.conf
+
 wget https://github.com/decent-im/gebootstrap/raw/master/1-bootstrap-gentoo-chroot.sh
 chmod a+x 1-bootstrap-gentoo-chroot.sh
-chroot . 1-bootstrap-gentoo-chroot.sh
+chroot . ./1-bootstrap-gentoo-chroot.sh

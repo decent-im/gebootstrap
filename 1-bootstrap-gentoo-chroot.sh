@@ -7,7 +7,7 @@ env-update
 
 emerge --sync
 
-gunzip -c /proc/config.gz /usr/src/livecd.config
+gunzip -c /proc/config.gz > /usr/src/livecd.config
 emerge hardened-sources
 cd /usr/src/linux
 cp ../livecd.config .config
