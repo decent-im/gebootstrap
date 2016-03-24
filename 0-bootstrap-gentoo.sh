@@ -20,7 +20,7 @@ STAGE_PATH=`wget $DISTFILES_DIR/latest-stage3-amd64-hardened+nomultilib.txt -O -
 wget $DISTFILES_DIR/$STAGE_PATH
 tar xaf stage*.tar.*
 
-http://distfiles.gentoo.org/releases/snapshots/current/portage-latest.tar.xz
+wget http://distfiles.gentoo.org/releases/snapshots/current/portage-latest.tar.xz
 tar xaf portage-latest.tar.xz -C usr
 
 for x in dev sys proc
