@@ -5,6 +5,12 @@ set -x # Trace execution
 . /etc/profile
 env-update
 
+# Beware of OOM killer
+dd if=/dev/zero of=/swap bs=1M count=4096
+mkswap /swap
+swapon /swap
+echo "/swap none swap defaults" > /etc/fstab
+
 emerge --sync
 
 gunzip -c /proc/config.gz > /usr/src/livecd.config
