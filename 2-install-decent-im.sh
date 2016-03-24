@@ -29,6 +29,10 @@ echo "System-visible FQDN: `hostname -f`"
 sed -i /etc/resolv.conf -e 's/^domain.*$//'
 echo "domain $DOMAIN" >> /etc/resolv.conf
 
+# Workaround until all lua packages support LUA_TARGETS
+emerge -v dev-lang/lua:5.1
+eselect lua set 5.1
+
 # Install meta-package, which gives prosody(+modules), spectrum2(+skype, +irc etc), postgresql
 emerge -v decent-im
 dispatch-conf # Just in case. Interactive.
