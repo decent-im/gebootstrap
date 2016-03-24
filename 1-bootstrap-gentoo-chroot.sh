@@ -8,7 +8,7 @@ env-update
 emerge --sync
 
 gunzip -c /proc/config.gz > /usr/src/livecd.config
-emerge hardened-sources genkernel
+emerge hardened-sources genkernel grub
 cd /usr/src/linux
 cp ../livecd.config .config
 make olddefconfig
