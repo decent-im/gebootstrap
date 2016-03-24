@@ -36,7 +36,6 @@ wget https://gist.github.com/andrey-utkin/2bb57efd85387edad34e/raw/b9d67d781f706
 # Install handy stuff
 emerge -v \
   gentoolkit \
-  eselect \
   \
   bind-tools \
   \
