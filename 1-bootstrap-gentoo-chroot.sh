@@ -11,6 +11,7 @@ gunzip -c /proc/config.gz > /usr/src/livecd.config
 emerge hardened-sources
 cd /usr/src/linux
 cp ../livecd.config .config
+make olddefconfig
 make localmodconfig
 cp .config ../localmodconfig.config
 genkernel --kernel-config=/usr/src/localmodconfig.config all
