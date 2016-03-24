@@ -16,7 +16,7 @@ echo "$FQDN" > /etc/fqdn
 HOSTNAME=`echo $FQDN | sed 's/.*$//'`
 DOMAIN=`echo $FQDN | sed 's/^[^.]*[.]//'`
 echo "$HOSTNAME" > /etc/hostname
-service hostname restart
+hostname $HOSTNAME
 
 echo "Detected external IP: $EXTERNAL_IP"
 echo "Detected FQDN: $FQDN"
