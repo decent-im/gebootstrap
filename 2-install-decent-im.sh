@@ -16,7 +16,7 @@ EXTERNAL_IP=`dig +short myip.opendns.com @resolver1.opendns.com`
 DNS_PTR=`dig +short -x $EXTERNAL_IP @resolver1.opendns.com`
 FQDN=`echo $DNS_PTR | sed 's/[.]$//'`
 echo "$FQDN" > /etc/fqdn
-HOSTNAME=`echo $FQDN | sed 's/.*$//'`
+HOSTNAME=`echo $FQDN | sed 's/[.].*$//'`
 DOMAIN=`echo $FQDN | sed 's/^[^.]*[.]//'`
 echo "$HOSTNAME" > /etc/hostname
 hostname $HOSTNAME
@@ -28,6 +28,7 @@ echo "System-visible FQDN: `hostname -f`"
 # Ensure no other domain present
 sed -i /etc/resolv.conf -e 's/^domain.*$//'
 echo "domain $DOMAIN" >> /etc/resolv.conf
+echo "domain $DOMAIN" > /etc/resolv.conf.head
 
 # Workaround until all lua packages support LUA_TARGETS
 emerge -v dev-lang/lua:5.1
