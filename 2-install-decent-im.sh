@@ -36,5 +36,5 @@ eselect lua set 5.1
 
 # Install meta-package, which gives prosody(+modules), spectrum2(+skype, +irc etc), postgresql
 emerge -v decent-im
-dispatch-conf # Just in case. Interactive.
+dispatch-conf # Interactive. TODO Automate.
 emerge --config =net-im/decent-im-9999
