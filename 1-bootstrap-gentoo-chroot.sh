@@ -36,6 +36,6 @@ emerge -v \
   bash-completion \
 
 
-wget https://github.com/decent-im/decent.im-gentoo-installer/raw/master/2-install-decent-im.sh
+wget https://github.com/decent-im/gebootstrap/raw/master/2-install-decent-im.sh
 chmod a+x 2-install-decent-im.sh
 ./2-install-decent-im.sh

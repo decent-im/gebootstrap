@@ -3,7 +3,7 @@
 ### Boot with Rescue System
 
 ### Download this script and execute
-### wget https://github.com/decent-im/decent.im-gentoo-installer/raw/master/0-bootstrap-gentoo.sh
+### wget https://github.com/decent-im/gebootstrap/raw/master/0-bootstrap-gentoo.sh
 ### chmod a+x 0-bootstrap-gentoo.sh
 ### ./0-bootstrap-gentoo.sh
 
@@ -28,6 +28,6 @@ do
   mount --rbind {/,}$x
 done
 
-wget https://github.com/decent-im/decent.im-gentoo-installer/raw/master/1-bootstrap-gentoo-chroot.sh
+wget https://github.com/decent-im/gebootstrap/raw/master/1-bootstrap-gentoo-chroot.sh
 chmod a+x 1-bootstrap-gentoo-chroot.sh
 chroot . 1-bootstrap-gentoo-chroot.sh
