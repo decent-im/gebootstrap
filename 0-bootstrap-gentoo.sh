@@ -1,19 +1,25 @@
 #!/bin/bash -e
 
-### TODO Boot with Rescue System
+### Boot with Rescue System
+
 ### Download this script and execute
-### wget https://gist.github.com/andrey-utkin/8edf529233ce3aa86cea -o bootstrap-gentoo.sh
-### chmod bootstrap-gentoo.sh
-### ./bootstrap-gentoo.sh
+### wget https://github.com/decent-im/decent.im-gentoo-installer/raw/master/0-bootstrap-gentoo.sh
+### chmod a+x 0-bootstrap-gentoo.sh
+### ./0-bootstrap-gentoo.sh
 
 ### TODO Create single partition on /dev/sda
 
-mkfs.ext4 /dev/sda1
-mount /dev/sda1 /mnt
-cd /mnt
+### If you really need, create and mount filesystem
+### mkfs.ext4 /dev/sda1
+### mount /dev/sda1 /mnt
+### cd /mnt
 
-### TODO Download and extract stage3
+# Download stage3
+DISTFILES_DIR='http://distfiles.gentoo.org/releases/amd64/autobuilds'
+STAGE_PATH=`wget $DISTFILES_DIR/latest-stage3-amd64-hardened+nomultilib.txt -O - -q | tail -1 | sed 's/ .*//'`
+wget $DISTFILES_DIR/$STAGE_PATH
 tar xaf stage*.tar.*
+
 http://distfiles.gentoo.org/releases/snapshots/current/portage-latest.tar.xz
 tar xaf portage-latest.tar.xz -C usr
 
@@ -22,8 +28,6 @@ do
   mount --rbind {/,}$x
 done
 
-wget https://gist.github.com/andrey-utkin/103dfe4f39d5b4ddc5de -O bootstrap-gentoo-chroot.sh
-chmod a+x bootstrap-gentoo-chroot.sh
-chroot . bootstrap-gentoo-chroot.sh
-
-reboot
+wget https://github.com/decent-im/decent.im-gentoo-installer/raw/master/1-bootstrap-gentoo-chroot.sh
+chmod a+x 1-bootstrap-gentoo-chroot.sh
+chroot . 1-bootstrap-gentoo-chroot.sh
