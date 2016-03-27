@@ -41,8 +41,6 @@ wget https://gist.github.com/andrey-utkin/2bb57efd85387edad34e/raw/b9d67d781f706
 emerge -v \
   gentoolkit \
   \
-  bind-tools \
-  \
   syslog-ng \
   logrotate \
   \
