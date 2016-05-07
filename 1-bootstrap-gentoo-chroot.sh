@@ -16,7 +16,17 @@ emerge --sync
 gunzip -c /proc/config.gz > /usr/src/livecd.config
 emerge hardened-sources genkernel grub
 cd /usr/src/linux
+
+# This config works for Hetzner CX10. YMMV. Change accordingly.
 make defconfig kvmconfig
+echo "
+CONFIG_SCSI_LOWLEVEL=y
+CONFIG_SCSI_VIRTIO=y
+CONFIG_VIRTIO_INPUT=y
+CONFIG_VIRTIO_MMIO=y
+CONFIG_VIRTIO_MMIO_CMDLINE_DEVICES=y
+" >> .config
+make olddefconfig
 cp .config /usr/src/kernel.config
 genkernel --kernel-config=/usr/src/kernel.config all
 
