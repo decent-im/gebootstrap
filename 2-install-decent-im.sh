@@ -5,6 +5,7 @@ echo "source /var/lib/layman/make.conf" >> /etc/portage/make.conf
 layman -S
 layman -a mva
 layman -a lua
+layman -a dev-zero
 
 yes | layman -o https://raw.githubusercontent.com/decent-im/gentoo-overlay/master/layman.xml -f -a decent-im
 
