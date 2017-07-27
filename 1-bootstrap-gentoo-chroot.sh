@@ -28,13 +28,13 @@ CONFIG_VIRTIO_MMIO_CMDLINE_DEVICES=y
 " >> .config
 make olddefconfig
 cp .config /usr/src/kernel.config
-genkernel --kernel-config=/usr/src/kernel.config all
+genkernel --no-mountboot --kernel-config=/usr/src/kernel.config all
 
-grub2-install /dev/sda
+grub-install /dev/sda
 
 # Care about networking setup. Disable upredictable "predictable ifnames"
 echo 'GRUB_CMDLINE_LINUX="$GRUB_CMDLINE_LINUX rootfstype=ext4 net.ifnames=0"' >> /etc/default/grub
-grub2-mkconfig -o /boot/grub/grub.cfg
+grub-mkconfig -o /boot/grub/grub.cfg
 
 # Configure networking
 ln -s net.lo /etc/init.d/net.eth0
