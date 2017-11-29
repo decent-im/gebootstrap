@@ -10,6 +10,7 @@ dd if=/dev/zero of=/swap bs=1M count=4096
 mkswap /swap
 swapon /swap
 echo "/swap none swap defaults" > /etc/fstab
+rc-update add swap boot
 
 emerge --sync
 
