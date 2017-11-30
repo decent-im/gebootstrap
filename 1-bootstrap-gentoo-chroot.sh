@@ -15,7 +15,7 @@ rc-update add swap boot
 emerge --sync
 
 gunzip -c /proc/config.gz > /usr/src/livecd.config
-emerge hardened-sources genkernel grub
+emerge gentoo-sources genkernel grub
 cd /usr/src/linux
 
 # This config works for Hetzner CX10. YMMV. Change accordingly.
