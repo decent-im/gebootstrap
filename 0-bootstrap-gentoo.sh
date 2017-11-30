@@ -16,7 +16,7 @@
 
 # Download stage3
 DISTFILES_DIR='http://distfiles.gentoo.org/releases/amd64/autobuilds'
-STAGE_PATH=`wget $DISTFILES_DIR/latest-stage3-amd64-hardened+nomultilib.txt -O - -q | tail -1 | sed 's/ .*//'`
+STAGE_PATH=`wget $DISTFILES_DIR/latest-stage3-amd64-nomultilib.txt -O - -q | tail -1 | sed 's/ .*//'`
 wget $DISTFILES_DIR/$STAGE_PATH
 tar xaf stage*.tar.*
 
