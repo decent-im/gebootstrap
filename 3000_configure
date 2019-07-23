@@ -1,0 +1,30 @@
+#!/bin/bash
+
+# Fail on errors
+set -e
+# Show what is being done
+set -x
+
+# Supposed to be run in the chroot
+
+# Generic system things
+
+# Nameserver, necessary for packages fetching
+echo 'nameserver 8.8.8.8' > etc/resolv.conf
+
+
+# Decent.im specific things
+
+# Enable third party repos required
+emerge layman
+layman -S
+layman -a lua
+layman -a decent-im
+
+# Switch to custom profile
+rm -f /etc/portage/make.profile
+mkdir /etc/portage/make.profile
+cat > /etc/portage/make.profile/parent <<EOF
+/var/db/repos/gentoo/profiles/default/linux/amd64/17.1/no-multilib
+/var/lib/layman/decent-im/profiles/features/decent.im
+EOF

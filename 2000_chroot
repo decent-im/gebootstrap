@@ -1,0 +1,12 @@
+#!/bin/bash
+
+# Fail on errors
+set -e
+# Show what is being done
+set -x
+
+for x in dev sys proc; do
+	mount --rbind {/,}$x
+done
+
+chroot .

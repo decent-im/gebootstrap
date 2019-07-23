@@ -1,0 +1,12 @@
+#!/bin/bash
+
+# Fail on errors
+set -e
+# Show what is being done
+set -x
+
+# Let profile changes take effect (e.g. un-bindist openssl)
+emerge --update --deep --changed-use @world
+
+# Install meta-package, which gives prosody(+modules), spectrum2(+skype, +irc etc), postgresql
+emerge decent-im
