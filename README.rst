@@ -1,0 +1,36 @@
+===================================
+Bootstrap tool for decent.im server
+===================================
+
+Supported usecases
+------------------
+
+* Chroot
+* Virtual machine, VPS
+
+Should work for Docker, too.
+
+How to use
+----------
+
+Follow the step sequence per the table below.
+
+
+===========================  ========  =========  ============
+ Step                         Chroot    VM, VPS    How?
+===========================  ========  =========  ============
+Boot into rescue system       Skip      Do         Manually
+Partition and format disk     Skip      Do         Manually
+Add swap                      Skip      Do         Manually
+Deploy gebootstrap scripts    Do        Do         Put ``gebootstrap/`` dir where rootfs is to be
+Deploy stage3                 Do        Do         Run ``gebootstrap/1000_deploy_stage3``, or use your stage4 or what you have
+Deploy Gentoo repo            Do        Do         Manually. Drop in gentoo.git, or portage snapshot, into /var/db/repos/gentoo
+Make your adjustments         Do        Do         For example, set up remote access, configure binhost. Optional.
+Chroot into stage3            Do        Do         Run ``gebootstrap/2000_chroot``
+Configure system for d.im     Do        Do         Run ``gebootstrap/3000_configure``
+Install d.im software         Do        Do         Run ``gebootstrap/4000_install``
+Install kernel                Skip      Do
+Set up bootloader             Skip      Do
+Reboot into new system        Skip      Do
+===========================  ========  =========  ============
+
