@@ -18,8 +18,7 @@ echo 'nameserver 8.8.8.8' > etc/resolv.conf
 # Enable third party repos required
 emerge layman
 layman -S
-layman -a lua
-layman -a decent-im
+yes | layman -o https://raw.githubusercontent.com/decent-im/gentoo-overlay/master/layman.xml -f -a decent-im
 
 # Switch to custom profile
 rm -f /etc/portage/make.profile
