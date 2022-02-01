@@ -9,4 +9,4 @@ for x in dev sys proc; do
 	mount --rbind {/,}$x
 done
 
-chroot .
+chroot . bin/bash
