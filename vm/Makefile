@@ -13,17 +13,19 @@ backup_packages_cache:
 
 openstack.qcow2:
 	# https://distfiles.gentoo.org/experimental/amd64/openstack/gentoo-openstack-amd64-default-nomultilib-20220721.qcow2
-	curl -o $@.wip -L https://distfiles.gentoo.org/experimental/amd64/openstack/gentoo-openstack-amd64-default-nomultilib-latest.qcow2
+	#curl -o $@.wip -L https://distfiles.gentoo.org/experimental/amd64/openstack/gentoo-openstack-amd64-default-nomultilib-latest.qcow2
+	curl -o $@.wip -L https://distfiles.gentoo.org/experimental/amd64/openstack/gentoo-openstack-amd64-default-nomultilib-20230421.qcow2
 	# check the signature
 	# https://distfiles.gentoo.org/experimental/amd64/openstack/gentoo-openstack-amd64-default-nomultilib-20220721.qcow2.asc
-	curl -o openstack.qcow2.asc -L https://distfiles.gentoo.org/experimental/amd64/openstack/gentoo-openstack-amd64-default-nomultilib-latest.qcow2.asc
+	#curl -o openstack.qcow2.asc -L https://distfiles.gentoo.org/experimental/amd64/openstack/gentoo-openstack-amd64-default-nomultilib-latest.qcow2.asc
+	curl -o openstack.qcow2.asc -L https://distfiles.gentoo.org/experimental/amd64/openstack/gentoo-openstack-amd64-default-nomultilib-20230421.qcow2.asc
 	#gpg --verify openstack.qcow2.asc $@.wip # TODO releng@gentoo.org
 	mv $@.wip $@
 
 
 resized.qcow2: openstack.qcow2
 	# expand the disk to not run out of space
-	qemu-img create -f qcow2 -o preallocation=metadata $@.wip 10G
+	qemu-img create -f qcow2 -o preallocation=metadata $@.wip 20G
 	virt-resize --expand /dev/sda3 $< $@.wip
 	mv $@.wip $@
 
@@ -44,7 +46,11 @@ package_manager_enabled.qcow2: resized.qcow2 repos/gentoo/.git/HEAD repos/decent
 		--copy-in backup/:/ \
 		--copy-in repos/gentoo:/var/db/repos \
 		--copy-in repos/decent-im:/var/db/repos \
+		--run-command 'chown root:portage -R /var/db/repos' \
 		--copy-in cache:/var \
+		--delete '/etc/runlevels/boot/cloud*' \
+		--delete '/etc/runlevels/default/cloud*' \
+		--run-command "sed -i /etc/inittab -e 's/^.*ttyS1.*$/#& # decent.im gebootstrap/'" \
 		;
 		#--run-command 'echo source /etc/portage/make.conf.decent-im >> /etc/portage/make.conf' \
 		#--run-command 'tar -C / -xaf /backup/decent-im_public_*.tar.xz' \
@@ -89,5 +95,8 @@ find_out_ipaddr.done: domain_install.done
 
 service_pkg_installed.done: find_out_ipaddr.done
 	# FIXME KVM host should have its own SSH keys trusted by VM?
-	ssh -t root@decent-im-gebootstrap  emerge -tv --quiet-build=y rust-bin decent-im
+	# FIXME MAKEOPTS=-j1 for gcc
+	# emerge -tvuDU --quiet-build=y --keep-going --jobs $(nproc) @world # 400+ minutes on total -j1.
+	ssh -t root@decent-im-gebootstrap  emerge -tv --quiet-build=y --keep-going --jobs $(nproc) decent-im
+	# decent.im_postinst
 	touch $@
