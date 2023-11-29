@@ -1,115 +1,82 @@
+DIRNAME = $(shell basename $$PWD)
+#VM_NAME ?= ${DIRNAME}
+VM_NAME ?= decent-im-gebootstrap
+
+
 .PHONY: all backup_packages_cache update_gentoo_repo drop_vm
 
-all: deployment.done
+all: ${VM_NAME}.metapackage.installed
 
 drop_vm:
-	virsh shutdown decent-im-gebootstrap
-	sleep 5
-	virsh destroy decent-im-gebootstrap
-	virsh undefine --remove-all-storage decent-im-gebootstrap
+	incus delete --force ${VM_NAME}
 
 backup_packages_cache:
-	rsync -rtv --progress root@decent-im-gebootstrap:/var/cache/{distfiles,binpkgs} cache
-
-openstack.qcow2:
-	# https://distfiles.gentoo.org/experimental/amd64/openstack/gentoo-openstack-amd64-default-nomultilib-20220721.qcow2
-	curl -o $@.wip -L https://distfiles.gentoo.org/experimental/amd64/openstack/gentoo-openstack-amd64-default-nomultilib-latest.qcow2
-	# check the signature
-	# https://distfiles.gentoo.org/experimental/amd64/openstack/gentoo-openstack-amd64-default-nomultilib-20220721.qcow2.asc
-	curl -o openstack.qcow2.asc -L https://distfiles.gentoo.org/experimental/amd64/openstack/gentoo-openstack-amd64-default-nomultilib-latest.qcow2.asc
-	#gpg --verify openstack.qcow2.asc $@.wip # TODO releng@gentoo.org
-	mv $@.wip $@
-
-
-resized.qcow2: openstack.qcow2
-	# expand the disk to not run out of space
-	qemu-img create -f qcow2 -o preallocation=metadata $@.wip 10G
-	virt-resize --expand /dev/sda3 $< $@.wip
-	mv $@.wip $@
+	mkdir -p cache
+	rsync -rtv -e 'ssh -o GlobalKnownHostsFile=${VM_NAME}.known_hosts' --progress root@`cat $(VM_NAME).ipv4`:/var/cache/binpkgs   cache
+	rsync -rtv -e 'ssh -o GlobalKnownHostsFile=${VM_NAME}.known_hosts' --progress root@`cat $(VM_NAME).ipv4`:/var/cache/distfiles cache
+	incus exec ${VM_NAME} -- chown -R portage:portage /var/cache/binpkgs /var/cache/distfiles
 
 repos/gentoo/.git/HEAD:
+	mkdir -p repos
 	git clone --depth 1 -b master https://github.com/gentoo-mirror/gentoo.git repos/gentoo
 
 update_gentoo_repo:
 	cd repos/gentoo && git fetch --depth 1 && git reset --hard origin/master && git gc
 
 repos/decent-im/.git/HEAD:
-	git clone --depth 1 -b master https://github.com/decent-im/gentoo-overlay.git repos/decent-im
+	#git clone --depth 1 -b master https://github.com/decent-im/gentoo-overlay.git repos/decent-im
+	mkdir -p repos
+	git clone https://github.com/decent-im/gentoo-overlay.git repos/decent-im
 
-package_manager_enabled.qcow2: resized.qcow2 repos/gentoo/.git/HEAD repos/decent-im/.git/HEAD
-	cp $< $@.wip
-
-	virt-customize --format qcow2 --add $@.wip \
-		--copy-in install-phase-files/etc:/ \
-		--copy-in backup/:/ \
-		--copy-in repos/gentoo:/var/db/repos \
-		--copy-in repos/decent-im:/var/db/repos \
-		--copy-in cache:/var \
-		;
-		#--run-command 'echo source /etc/portage/make.conf.decent-im >> /etc/portage/make.conf' \
-		#--run-command 'tar -C / -xaf /backup/decent-im_public_*.tar.xz' \
-		#--run-command 'tar -C / -xaf /backup/decent-im_private_*.tar.xz' \
-		#;
-	mv $@.wip $@
-
-access_configured.qcow2: package_manager_enabled.qcow2
-	cp $< $@.wip
-	# --ssh-inject "root" is private data injection!
-	virt-customize --format qcow2 --add $@.wip \
-		--ssh-inject "root" \
-		--root-password "random" \
-		--password-crypto sha512 \
-		> root-password.out \
-		;
-	mv $@.wip $@
-
-domain_install.done: access_configured.qcow2
-	cp $< decent-im-gebootstrap.qcow2
-	sudo virt-install \
-		--connect qemu:///system \
-		--noautoconsole \
-		--import \
-		--name decent-im-gebootstrap \
-		--disk path=decent-im-gebootstrap.qcow2,format=qcow2 \
-		--network network=br0,model=virtio \
-		--ram 4096 \
-		--vcpus=2 \
-		--os-variant=linux2020 \
-		--cpu=host \
-		;
-	# change /etc/hosts entry based on
-	# virsh net-dhcp-leases --network default
+${VM_NAME}.created:
+	incus launch -p default -p bridgeprofile images:gentoo/openrc decent-im-gebootstrap
 	touch $@
 
-find_out_ipaddr.done: domain_install.done
-	# human
-	# * Login manually via virt-manager using the generated password, save IP into /etc/hosts
-	# * Log in via SSH or otherwise get the host's keys into known_hosts
-	false
+${VM_NAME}.access.configured: ${VM_NAME}.created
+	test -f backup/root/.ssh/authorized_keys # place something there!
+	incus file push -rv backup/root/.ssh/ ${VM_NAME}/'/root/'
+	incus exec ${VM_NAME} -- chown -R root:root /root/.ssh
+	incus exec ${VM_NAME} -- chmod u=rx,go= -R /root/.ssh
+	incus file push -rv backup/etc/ssh/ssh_host_*_key* ${VM_NAME}/'/etc/ssh/' || true
+	incus exec ${VM_NAME} -- rc-update add sshd default
+	incus exec ${VM_NAME} -- /etc/init.d/sshd start
 
-service_pkg_installed.done: find_out_ipaddr.done
-	# FIXME KVM host should have its own SSH keys trusted by VM?
-	ssh -t root@decent-im-gebootstrap  emerge -tv --quiet-build=y rust-bin decent-im
+	incus list --format json ${VM_NAME} | jq --raw-output .[0].state.network.eth0.addresses[0].address > ${VM_NAME}.ipv4
+	incus list --format json ${VM_NAME} | jq --raw-output .[0].state.network.eth0.addresses[1].address > ${VM_NAME}.ipv6
+	ssh-keyscan -H `cat $(VM_NAME).ipv4` > ${VM_NAME}.known_hosts
+
+	# persist host keys even if this is the first run ever
+	mkdir -p backup/etc/ssh/
+	rsync -rtv -e 'ssh -o GlobalKnownHostsFile=${VM_NAME}.known_hosts' root@`cat $(VM_NAME).ipv4`:/etc/ssh/'ssh_host_*_key*' backup/etc/ssh/
+	#incus file pull -rv ${VM_NAME}/'/etc/ssh' backup/etc # clunkier tool than rsync
 	touch $@
 
-admin_tools_installed.done: find_out_ipaddr.done
-	ssh -t root@decent-im-gebootstrap  emerge -tv --quiet-build=y \
-		tmux \
-		vim \
-		gentoolkit \
-		;
-
+${VM_NAME}.package_manager.configured: ${VM_NAME}.access.configured repos/decent-im/.git/HEAD
+	# gentoo repo is currently not pinned to local checkout!
+	# provided system image is not pinned too!
+	# FIXME not idempotent:
+	incus exec ${VM_NAME} -- mv /etc/portage/make.conf /etc/portage/make.conf.orig
+	incus exec ${VM_NAME} -- mkdir /etc/portage/make.conf
+	incus exec ${VM_NAME} -- mv /etc/portage/make.conf.orig /etc/portage/make.conf/make.conf
+	rsync -rtv -e 'ssh -o GlobalKnownHostsFile=${VM_NAME}.known_hosts' repos/decent-im root@`cat $(VM_NAME).ipv4`:/var/db/repos/
+	rsync -rtv -e 'ssh -o GlobalKnownHostsFile=${VM_NAME}.known_hosts' install-phase-files/etc/portage/ root@`cat $(VM_NAME).ipv4`:/etc/portage/
+	rsync -rtv -e 'ssh -o GlobalKnownHostsFile=${VM_NAME}.known_hosts' cache root@`cat $(VM_NAME).ipv4`:/var/
 	touch $@
 
-service_configured.done: service_pkg_installed.done
+${VM_NAME}.metapackage.installed: ${VM_NAME}.package_manager.configured
+	# enable binary packages from distro:
+	incus exec ${VM_NAME} -- emerge -u getuto
+	incus exec ${VM_NAME} -- getuto
+
+	incus exec ${VM_NAME} -- emerge decent-im
+	make VM_NAME=${VM_NAME} backup_packages_cache
+	touch $@
+
+utopia.achieved:
 	# add subdomains in DNS - chat, irc, proxy, pubsub
 	# edit /etc/conf.d/hostname
 	# edit /etc/decent.im/config
 	# run decent.im_postinst (FIXME will fail at least on biboumi)
 	# drop in the website contents
 	false
-	touch $@
-
-all.done: admin_tools_installed.done service_configured.done
-	echo "Now add some users and make use of it"
 	touch $@
