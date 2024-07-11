@@ -29,7 +29,10 @@ repos/decent-im/.git/HEAD:
 	git clone https://github.com/decent-im/gentoo-overlay.git repos/decent-im
 
 ${VM_NAME}.created:
-	incus launch -p default -p bridgeprofile images:gentoo/openrc decent-im-gebootstrap
+	# The profile applied (default, or custom) should give desirable connectivity
+	# Check out https://blog.simos.info/how-to-make-your-lxd-containers-get-ip-addresses-from-your-lan-using-a-bridge/
+	# Your container could get LAN IP and globally routable IPv6
+	incus launch images:gentoo/openrc decent-im-gebootstrap -c limits.cpu=2 -c limits.memory=4GiB
 	touch $@
 
 ${VM_NAME}.access.configured: ${VM_NAME}.created
