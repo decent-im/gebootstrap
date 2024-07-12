@@ -7,8 +7,9 @@ VM_NAME ?= decent-im-gebootstrap
 
 all: ${VM_NAME}.metapackage.installed
 
-drop_vm:
+clean:
 	incus delete --force ${VM_NAME}
+	rm -v ${VM_NAME}.*
 
 backup_packages_cache:
 	mkdir -p cache
