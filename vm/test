@@ -7,3 +7,33 @@ IP=$(cat "${VM_NAME}".ipv4)
 
 curl --silent http://"$IP" | grep -F '<title>decent.im</title>' > /dev/null
 curl --silent --resolve "$D:443:$IP" https://"$D" | grep -F '<title>decent.im</title>' > /dev/null
+
+USER_PASSWORD=$(dd if=/dev/urandom bs=15 count=1 status=none | base32)
+cat <<EOF | incus exec "$VM_NAME" -- prosodyctl adduser user@"$D"
+$USER_PASSWORD
+$USER_PASSWORD
+EOF
+
+
+# incus exec "$VM_NAME" -- emerge -uq sendxmpp
+# cat <<EOF | incus exec "$VM_NAME" -- tee .sendxmpprc
+# username: user
+# jserver: $D
+# password: $USER_PASSWORD
+# EOF
+# incus exec "$VM_NAME" -- chmod 700 .sendxmpprc
+# echo 'Test message' | incus exec "$VM_NAME" -- sendxmpp --tls --tls-ca-path /etc/ssl/certs/ user@"$D"
+
+incus exec "$VM_NAME" -- bash -c "which xmppc || (emerge -uq1 libstrophe && git clone https://codeberg.org/Anoxinon_e.V./xmppc && cd xmppc && ./bootstrap.sh && ./configure && make install)"
+incus exec "$VM_NAME" -- mkdir -p .config
+cat <<EOF | incus exec "$VM_NAME" -- tee .config/xmppc.conf
+[default]
+jid=user@$D
+pwd=$USER_PASSWORD
+EOF
+incus exec "$VM_NAME" -- xmppc -m message chat user@"$D" "Message"
+
+# TODO log in somehow
+incus exec "$VM_NAME" -- grep "Authenticated as user@$D" /var/log/prosody/prosody.log
+
+incus exec ${VM_NAME} -- decent.im_health_check
