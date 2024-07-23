@@ -34,15 +34,16 @@ ssh_key:
 	ssh-keygen -f ssh_key -N ''
 
 storage-pool.created:
-	incus storage create decent-im-gebootstrap btrfs size=40GiB
+	incus storage create ${VM_NAME} btrfs size=40GiB
 	touch $@
 
 ${VM_NAME}.created: storage-pool.created ssh_key
 	# The profile applied (default, or custom) should give desirable connectivity
 	# Check out https://blog.simos.info/how-to-make-your-lxd-containers-get-ip-addresses-from-your-lan-using-a-bridge/
 	# Your container could get LAN IP and globally routable IPv6
-	incus launch --storage decent-im-gebootstrap images:gentoo/openrc decent-im-gebootstrap -c limits.cpu=2 -c limits.memory=4GiB
-	touch $@
+	incus launch --storage ${VM_NAME} images:gentoo/openrc ${VM_NAME} -c limits.cpu=2 -c limits.memory=4GiB -c volatile.eth0.hwaddr=00:16:3e:93:5e:3b
+	incus config show ${VM_NAME} > $@.tmp
+	mv $@.tmp $@
 
 ${VM_NAME}.access.configured: ${VM_NAME}.created
 	test -f backup/root/.ssh/authorized_keys # place something there!
@@ -50,6 +51,8 @@ ${VM_NAME}.access.configured: ${VM_NAME}.created
 	incus exec ${VM_NAME} -- chown -R root:root /root/.ssh
 	incus exec ${VM_NAME} -- chmod u=rx,go= -R /root/.ssh
 	incus file push -rv backup/etc/ssh/ssh_host_*_key* ${VM_NAME}/'/etc/ssh/' || true
+	incus file push -rv backup/ ${VM_NAME}/'/' # hostname, etc/decent.im/config etc
+	incus exec ${VM_NAME} -- /etc/init.d/hostname restart
 	incus exec ${VM_NAME} -- rc-update add sshd default
 	incus exec ${VM_NAME} -- /etc/init.d/sshd start || true # Transient "WARNING: sshd is already starting" breaks the script
 
@@ -93,11 +96,22 @@ ${VM_NAME}.metapackage.installed: ${VM_NAME}.package_manager.configured
 	make VM_NAME=${VM_NAME} backup_packages_cache
 	touch $@
 
-utopia.achieved:
+${VM_NAME}.postinst.done: ${VM_NAME}.metapackage.installed
 	# add subdomains in DNS - chat, irc, proxy, pubsub
+
+	# this is dealt with by backup/etc/ contents:
 	# edit /etc/conf.d/hostname
 	# edit /etc/decent.im/config
+
 	# run decent.im_postinst (FIXME will fail at least on biboumi)
+	incus exec ${VM_NAME} -- decent.im_postinst
+
+	# edit router firewall rules to point XMPP ports (3478-5349) to internal IPv4, IPv6 of the container
+
 	# drop in the website contents
-	false
+	cd /var/www && git clone https://github.com/decent-im/decent-im.github.io.git && rsync -av --exclude=.git decent-im.github.io/ html/
+
 	touch $@
+
+${VM_NAME}.tested: ${VM_NAME}.postinst.done
+	VM_NAME=${VM_NAME} ./test

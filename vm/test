@@ -1,0 +1,9 @@
+#!/bin/bash
+set -euo pipefail
+set -x
+
+D=$(incus exec "$VM_NAME" -- bash -c 'source /etc/decent.im/config; echo $D')
+IP=$(cat "${VM_NAME}".ipv4)
+
+curl --silent http://"$IP" | grep -F '<title>decent.im</title>' > /dev/null
+curl --silent --resolve "$D:443:$IP" https://"$D" | grep -F '<title>decent.im</title>' > /dev/null
