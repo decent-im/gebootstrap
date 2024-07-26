@@ -1,0 +1,67 @@
+From 08bb408e801acf36c49b9ce313a08bec27adc9f9 Mon Sep 17 00:00:00 2001
+From: Andriy Utkin <hello@autkin.net>
+Date: Fri, 26 Jul 2024 22:24:50 +0100
+Subject: [PATCH] Disable nftables. For incus container.
+
+---
+ files/sbin/decent.im_health_check           | 3 ++-
+ files/sbin/decent.im_postinst               | 4 ++--
+ files/sbin/decent.im_update_netfilter_rules | 2 +-
+ files/sbin/decent.im_update_world           | 2 +-
+ 5 files changed, 7 insertions(+), 5 deletions(-)
+
+diff --git a/files/sbin/decent.im_health_check b/files/sbin/decent.im_health_check
+index 8b388ee..1db9919 100755
+--- a/files/sbin/decent.im_health_check
++++ b/files/sbin/decent.im_health_check
+@@ -16,7 +16,8 @@ services_status() {
+ 		ERRORS=$((ERRORS + 1))
+ 	fi
+ 
+-	SERVICES="ntpd syslog-ng nftables nullmailer cronie $PGSQL prosody nginx turnserver"
++	#SERVICES="ntpd syslog-ng nftables nullmailer cronie $PGSQL prosody nginx turnserver"
++	SERVICES="ntpd syslog-ng nullmailer cronie $PGSQL prosody nginx turnserver"
+ 
+ 	for x in $SERVICES
+ 	do
+diff --git a/files/sbin/decent.im_postinst b/files/sbin/decent.im_postinst
+index 0b4d730..cfc54fd 100755
+--- a/files/sbin/decent.im_postinst
++++ b/files/sbin/decent.im_postinst
+@@ -8,8 +8,8 @@ rc-service ntpd start
+ rc-update add syslog-ng default
+ rc-service syslog-ng start
+ 
+-rc-update add nftables default
+-rc-service nftables start
++#rc-update add nftables default
++#rc-service nftables start
+ 
+ rc-update add cronie default
+ rc-service cronie start
+diff --git a/files/sbin/decent.im_update_netfilter_rules b/files/sbin/decent.im_update_netfilter_rules
+index 9c215b8..adb0111 100755
+--- a/files/sbin/decent.im_update_netfilter_rules
++++ b/files/sbin/decent.im_update_netfilter_rules
+@@ -22,4 +22,4 @@ mv "$tmpfile" /etc/nftables.d/decent.im_geoblock
+ # one possible way:
+ # /var/lib/nftables/rules-save -> include /etc/nftables.conf
+ # /etc/nftables.conf -> flush ruleset; include /etc/nftables.d/{a,b,c}
+-/etc/init.d/nftables reload
++#/etc/init.d/nftables reload
+diff --git a/files/sbin/decent.im_update_world b/files/sbin/decent.im_update_world
+index 0519ab2..972d1d3 100755
+--- a/files/sbin/decent.im_update_world
++++ b/files/sbin/decent.im_update_world
+@@ -27,7 +27,7 @@ fi
+ 
+ # Reload nftables ruleset unconditionally, it doesn't cause any disruption
+ # Use reload, because restart drops the ruleset first, breaking atomicity.
+-rc-service nftables reload
++#rc-service nftables reload
+ 
+ mkdir -p /var/lib/decent.im
+ touch /var/lib/decent.im/update_world.done
+-- 
+2.45.2
+
