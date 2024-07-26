@@ -8,32 +8,79 @@ IP=$(cat "${VM_NAME}".ipv4)
 curl --silent http://"$IP" | grep -F '<title>decent.im</title>' > /dev/null
 curl --silent --resolve "$D:443:$IP" https://"$D" | grep -F '<title>decent.im</title>' > /dev/null
 
-USER_PASSWORD=$(dd if=/dev/urandom bs=15 count=1 status=none | base32)
-cat <<EOF | incus exec "$VM_NAME" -- prosodyctl adduser user@"$D"
-$USER_PASSWORD
-$USER_PASSWORD
-EOF
+if ! incus exec "$VM_NAME" -- bash -c "prosodyctl shell user list $D | grep user@$D"; then
+	USER_PASSWORD=$(dd if=/dev/urandom bs=15 count=1 status=none | base32)
+	cat <<-EOF | incus exec "$VM_NAME" -- prosodyctl adduser user@"$D"
+	$USER_PASSWORD
+	$USER_PASSWORD
+	EOF
+
+	incus exec "$VM_NAME" -- mkdir -p .config
+	cat <<-EOF | incus exec "$VM_NAME" -- tee .config/xmppc.conf
+	[default]
+	jid=user@$D
+	pwd=$USER_PASSWORD
+	EOF
+
+	# cat <<-EOF | incus exec "$VM_NAME" -- tee .sendxmpprc
+	# username: user
+	# jserver: $D
+	# password: $USER_PASSWORD
+	# EOF
+	# incus exec "$VM_NAME" -- chmod 700 .sendxmpprc
+fi
 
 
 # incus exec "$VM_NAME" -- emerge -uq sendxmpp
-# cat <<EOF | incus exec "$VM_NAME" -- tee .sendxmpprc
-# username: user
-# jserver: $D
-# password: $USER_PASSWORD
-# EOF
-# incus exec "$VM_NAME" -- chmod 700 .sendxmpprc
 # echo 'Test message' | incus exec "$VM_NAME" -- sendxmpp --tls --tls-ca-path /etc/ssl/certs/ user@"$D"
 
 incus exec "$VM_NAME" -- bash -c "which xmppc || (emerge -uq1 libstrophe && git clone https://codeberg.org/Anoxinon_e.V./xmppc && cd xmppc && ./bootstrap.sh && ./configure && make install)"
-incus exec "$VM_NAME" -- mkdir -p .config
-cat <<EOF | incus exec "$VM_NAME" -- tee .config/xmppc.conf
-[default]
-jid=user@$D
-pwd=$USER_PASSWORD
-EOF
 incus exec "$VM_NAME" -- xmppc -m message chat user@"$D" "Message"
 
 # TODO log in somehow
 incus exec "$VM_NAME" -- grep "Authenticated as user@$D" /var/log/prosody/prosody.log
 
+# decent-im-gebootstrap ~ # xmppc -m discovery info x.autkin.net
+# !!! WARNING: XMPPC is running in development mode !!!
+# Warning: Developer-Mode: XMPP_CONN_FLAG_TRUST_TLS
+# bytestreams - proxy                - SOCKS5 Bytestreams Service
+# im         - server               - Prosody
+# file       - store                - HTTP File Upload
+#         vcard-temp
+#         urn:xmpp:reporting:0
+#         urn:xmpp:reporting:reason:spam:0
+#         urn:xmpp:reporting:reason:abuse:0
+#         urn:xmpp:reporting:1
+#         msgoffline
+#         http://jabber.org/protocol/bytestreams
+#         jabber:iq:register
+#         jabber:iq:last
+#         urn:xmpp:extdisco:1
+#         urn:xmpp:extdisco:2
+#         http://jabber.org/protocol/disco#info
+#         http://jabber.org/protocol/disco#items
+#         jabber:iq:private
+#         urn:xmpp:carbons:rules:0
+#         urn:xmpp:carbons:2
+#         jabber:iq:version
+#         urn:xmpp:blocking
+#         jabber:iq:roster
+#         urn:xmpp:time
+#         jabber:iq:time
+#         urn:xmpp:http:upload:0
+#         urn:xmpp:http:upload
+#         urn:xmpp:ping
+#         http://jabber.org/protocol/commands
+# 
+
+incus exec ${VM_NAME} -- xmppc -m discovery info x.autkin.net
+incus exec ${VM_NAME} -- xmppc -m discovery item chat.x.autkin.net
+incus exec ${VM_NAME} -- xmppc -m discovery info irc.decent.im
+incus exec ${VM_NAME} -- xmppc -m discovery info irc.x.autkin.net
+
+
 incus exec ${VM_NAME} -- decent.im_health_check
+
+incus exec ${VM_NAME} -- decent.im_backup_db
+incus exec ${VM_NAME} -- decent.im_letsencrypt
+incus exec ${VM_NAME} -- decent.im_update_world
