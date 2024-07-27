@@ -52,7 +52,7 @@ ${VM_NAME}.access.configured: ${VM_NAME}.created
 	incus exec ${VM_NAME} -- chmod u=rx,go= -R /root/.ssh
 	incus file push -rv backup/etc/ssh/ssh_host_*_key* ${VM_NAME}/'/etc/ssh/' || true
 	incus file push -rv backup/ ${VM_NAME}/'/' # hostname, etc/decent.im/config etc
-	incus exec ${VM_NAME} -- /etc/init.d/hostname restart
+	incus exec ${VM_NAME} -- /etc/init.d/hostname restart || true
 	incus exec ${VM_NAME} -- rc-update add sshd default
 	incus exec ${VM_NAME} -- /etc/init.d/sshd start || true # Transient "WARNING: sshd is already starting" breaks the script
 
