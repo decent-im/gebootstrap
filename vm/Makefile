@@ -84,7 +84,7 @@ ${VM_NAME}.package_manager.configured: ${VM_NAME}.access.configured repos/decent
 	incus exec ${VM_NAME} -- mv /etc/portage/make.conf.orig /etc/portage/make.conf/make.conf
 	rsync -rtv -e "ssh -F ${VM_NAME}.ssh_config" repos/decent-im root@`cat $(VM_NAME).ipv4`:/var/db/repos/
 	rsync -rtv -e "ssh -F ${VM_NAME}.ssh_config" install-phase-files/etc/portage/ root@`cat $(VM_NAME).ipv4`:/etc/portage/
-	rsync -rtv -e "ssh -F ${VM_NAME}.ssh_config" cache root@`cat $(VM_NAME).ipv4`:/var/
+	rsync -rtv -e "ssh -F ${VM_NAME}.ssh_config" cache root@`cat $(VM_NAME).ipv4`:/var/ || true
 	touch $@
 
 ${VM_NAME}.metapackage.installed: ${VM_NAME}.package_manager.configured
