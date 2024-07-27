@@ -37,7 +37,7 @@ storage-pool.created:
 	incus storage create ${VM_NAME} btrfs size=40GiB
 	touch $@
 
-${VM_NAME}.created: storage-pool.created ssh_key
+${VM_NAME}.created: storage-pool.created
 	# The profile applied (default, or custom) should give desirable connectivity
 	# Check out https://blog.simos.info/how-to-make-your-lxd-containers-get-ip-addresses-from-your-lan-using-a-bridge/
 	# Your container could get LAN IP and globally routable IPv6
@@ -45,13 +45,14 @@ ${VM_NAME}.created: storage-pool.created ssh_key
 	incus config show ${VM_NAME} > $@.tmp
 	mv $@.tmp $@
 
-${VM_NAME}.access.configured: ${VM_NAME}.created
-	test -f backup/root/.ssh/authorized_keys # place something there!
-	incus file push -rv backup/root/.ssh/ ${VM_NAME}/'/root/'
+${VM_NAME}.access.configured: ${VM_NAME}.created ssh_key
+	incus file push -rv backup/etc/ssh/ssh_host_*_key* ${VM_NAME}/'/etc/ssh/' || true
+	incus file push -rv backup/* ${VM_NAME}/ || true # hostname, etc/decent.im/config etc
+	# regardless of presence of backup/root/.ssh/authorized_keys, enrol our local ssh_key:
+	incus exec ${VM_NAME} -- mkdir -p /root/.ssh
+	incus exec ${VM_NAME} -- tee -a /root/.ssh/authorized_keys < ssh_key.pub
 	incus exec ${VM_NAME} -- chown -R root:root /root/.ssh
 	incus exec ${VM_NAME} -- chmod u=rx,go= -R /root/.ssh
-	incus file push -rv backup/etc/ssh/ssh_host_*_key* ${VM_NAME}/'/etc/ssh/' || true
-	incus file push -rv backup/ ${VM_NAME}/'/' # hostname, etc/decent.im/config etc
 	incus exec ${VM_NAME} -- /etc/init.d/hostname restart || true
 	incus exec ${VM_NAME} -- rc-update add sshd default
 	incus exec ${VM_NAME} -- /etc/init.d/sshd start || true # Transient "WARNING: sshd is already starting" breaks the script
