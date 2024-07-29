@@ -1,6 +1,7 @@
 DIRNAME = $(shell basename $$PWD)
 #VM_NAME ?= ${DIRNAME}
 VM_NAME ?= decent-im-gebootstrap
+VM_OR_NOT ?= # set to --vm for a VM rather than a container
 
 
 .PHONY: all backup_packages_cache update_gentoo_repo drop_vm
@@ -41,11 +42,12 @@ ${VM_NAME}.created: storage-pool.created
 	# The profile applied (default, or custom) should give desirable connectivity
 	# Check out https://blog.simos.info/how-to-make-your-lxd-containers-get-ip-addresses-from-your-lan-using-a-bridge/
 	# Your container could get LAN IP and globally routable IPv6
-	incus launch --storage ${VM_NAME} images:gentoo/openrc ${VM_NAME} -c limits.cpu=2 -c limits.memory=4GiB -c volatile.eth0.hwaddr=00:16:3e:93:5e:3b
+	incus launch --storage ${VM_NAME} ${VM_OR_NOT} images:gentoo/openrc ${VM_NAME} -c limits.cpu=2 -c limits.memory=4GiB -c volatile.eth0.hwaddr=00:16:3e:93:5e:3b -c security.secureboot=false
 	incus config show ${VM_NAME} > $@.tmp
 	mv $@.tmp $@
 
 ${VM_NAME}.access.configured: ${VM_NAME}.created ssh_key
+	while ! incus exec ${VM_NAME} -- true; do echo -n .; sleep 1; done; # wait over "Error: VM agent isn't currently running"
 	incus file push -rv backup/etc/ssh/ssh_host_*_key* ${VM_NAME}/'/etc/ssh/' || true
 	incus file push -rv backup/* ${VM_NAME}/ || true # hostname, etc/decent.im/config etc
 	# regardless of presence of backup/root/.ssh/authorized_keys, enrol our local ssh_key:
