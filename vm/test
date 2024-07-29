@@ -34,7 +34,7 @@ fi
 # incus exec "$VM_NAME" -- emerge -uq sendxmpp
 # echo 'Test message' | incus exec "$VM_NAME" -- sendxmpp --tls --tls-ca-path /etc/ssl/certs/ user@"$D"
 
-incus exec "$VM_NAME" -- bash -c "which xmppc || (emerge -uq1 libstrophe && git clone https://codeberg.org/Anoxinon_e.V./xmppc && cd xmppc && ./bootstrap.sh && ./configure && make install)"
+incus exec "$VM_NAME" -- bash -c "which xmppc"
 incus exec "$VM_NAME" -- xmppc -m message chat user@"$D" "Message"
 
 # TODO log in somehow

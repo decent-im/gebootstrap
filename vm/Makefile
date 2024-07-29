@@ -97,6 +97,7 @@ ${VM_NAME}.metapackage.installed: ${VM_NAME}.package_manager.configured
 	incus exec ${VM_NAME} -- getuto
 
 	incus exec ${VM_NAME} -- emerge decent-im
+	incus exec ${VM_NAME} -- emerge -qu xmppc # for tests
 	make VM_NAME=${VM_NAME} backup_packages_cache
 	touch $@
 
