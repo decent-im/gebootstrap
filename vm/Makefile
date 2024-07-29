@@ -113,7 +113,7 @@ ${VM_NAME}.postinst.done: ${VM_NAME}.metapackage.installed
 	# edit router firewall rules to point XMPP ports (3478-5349) to internal IPv4, IPv6 of the container
 
 	# drop in the website contents
-	cd /var/www && git clone https://github.com/decent-im/decent-im.github.io.git && rsync -av --exclude=.git decent-im.github.io/ html/
+	incus exec ${VM_NAME} -- bash -c "cd /var/www && git clone https://github.com/decent-im/decent-im.github.io.git && rsync -av --exclude=.git decent-im.github.io/ html/"
 
 	touch $@
 
